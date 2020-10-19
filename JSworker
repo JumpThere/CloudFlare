@@ -1,0 +1,50 @@
+// This is a JavaScript file which can be used to achieve some really nice things on Cloudflare edge
+// As an example, if we want to block some countries, with custom messages, this script might be of use.
+// Simple open your dash.cloudflare.com, and navigate to worker tab. Create a worker tab, paste below, and assign
+// the route to the worker.
+// Author - Ashutosh Gautam - JumpThere
+addEventListener('fetch', event => {
+  event.respondWith(blockCountries(event.request))
+})
+
+//Add countries to this Set to Dis-Allow them
+const countries = new Set([  
+"country codes",
+"country codes", 
+"country codes" // Put the country codes here - for instance, for United States, put US
+  ])
+// Add IPs we want to whitelist - no need to change these
+const whitelist_IP = new Set([
+  "xx.xx.xx.xx",
+  "xx.xx.xx.xx" // Put the IPs you'd want to whitelist
+
+
+])
+
+async function blockCountries(request) {
+  // Get country value from request headers
+  let country = request.headers.get('cf-ipcountry')
+  let connecting_IPs = request.headers.get('cf-connecting-ip')
+  // let forwardedfor = request.headers.get('X-FORWARDED-FOR') // Keeping this place holder so that object is initialized - Ash
+
+  // Find out if country is on the Blocked list
+  let countryBlocked = countries.has(country)
+  let IPsAllowed = whitelist_IP.has(connecting_IPs) // This will stay here until the last else works fine. - Ash
+ // let IPForward = whitelist_IP.has(forwardedfor)
+  // If it's on the allow list, give back a 20x, if not serve a 403
+  if (countryBlocked){
+    // Catch-all return of the original response
+   // return await fetch(request)
+    return new Response("sorry, this is forbidden",
+        { status: 403, statusText: "Forbidden" })}
+    
+  }
+  else if (IPsAllowed) {
+    return await fetch(request)
+  }
+  //else if (IPForward) {
+    //return await fetch(request)
+ // }
+  else {
+     return await fetch(request)
+}
